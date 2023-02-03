@@ -13,9 +13,17 @@ func newRouter() *chi.Mux {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
-	// http handlers
+	// top level http handlers
 	r.Get("/", index)
 	r.Get("/healthz", healthz)
+
+	// api http handlers
+	r.Route("/api", func(apiRouter chi.Router) {
+		apiRouter.Route("/v1", func(apiV1Router chi.Router) {
+			apiV1Router.Use(apiVersionCtx("v1"))
+			r.Get("/", index)
+		})
+	})
 
 	return r
 }
