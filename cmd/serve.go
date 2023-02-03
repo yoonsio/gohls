@@ -4,6 +4,8 @@ Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 	"github.com/yoonsio/gohls/api"
 )
@@ -14,10 +16,7 @@ var serveCmd = &cobra.Command{
 	Short: "starts API service",
 	Long:  `starts API service for gohls`,
 	Run: func(cmd *cobra.Command, args []string) {
-		svc := api.NewService()
-		if err := svc.Run(); err != nil {
-			panic(err)
-		}
+		api.NewService().Run(context.Background())
 	},
 }
 
