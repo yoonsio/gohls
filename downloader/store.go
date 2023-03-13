@@ -1,7 +1,6 @@
 package downloader
 
 import (
-	"errors"
 	"io"
 	"os"
 	"strings"
@@ -45,7 +44,10 @@ type LocalStore struct {
 
 func NewLocalStorage(dir string) (*LocalStore, error) {
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
-		return nil, errors.New("directory does not exist")
+		err := os.Mkdir(dir, os.ModePerm)
+		if err != nil {
+			return nil, err
+		}
 	}
 	return &LocalStore{
 		dir: dir,

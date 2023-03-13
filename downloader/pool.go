@@ -21,7 +21,7 @@ type Pool struct {
 func NewPool() *Pool {
 	ctx, cancel := context.WithCancel(context.Background())
 	p := &Pool{
-		size:    1,
+		size:    4,
 		bufsize: 100,
 		eg:      &errgroup.Group{},
 		cancel:  cancel,

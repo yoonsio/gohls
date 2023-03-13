@@ -19,10 +19,10 @@ var downloadCmd = &cobra.Command{
 	Long:  `Download HLS streams`,
 	Run: func(cmd *cobra.Command, args []string) {
 
-		ctx, cancel := context.WithTimeout(context.Background(), 8*time.Hour)
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Hour)
 		defer cancel()
 
-		localStore, err := downloader.NewLocalStorage("testdir")
+		localStore, err := downloader.NewLocalStorage(time.Now().Format("2006-01-02"))
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -31,7 +31,10 @@ var downloadCmd = &cobra.Command{
 			downloader.WithStore(localStore),
 		)
 
-		urls := []string{}
+		urls := []string{
+			"https://stream-us1-alfa.dropcam.com/nexus_aac/88090853f44849c892642d805c42ad9a/playlist.m3u8?public=MGKM8iptgQ", // gym
+			// "https://stream-us1-charlie.dropcam.com/nexus_aac/e6163f08d5094f21a6524733ad2c7023/playlist.m3u8?public=zWixbR3lG9", // toybox
+		}
 
 		if err := streamClient.Download(ctx, urls); err != nil {
 			log.Fatal(err)
