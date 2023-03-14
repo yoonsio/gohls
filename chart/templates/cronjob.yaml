@@ -1,0 +1,39 @@
+{{- if .Values.cronjob.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "gohls.fullname" . }}
+  labels:
+    {{- include "gohls.labels" . | nindent 4 }}
+spec:
+  timeZone: "America/Toronto"
+  schedule: "{{ .Values.cronjob.schedule }}"
+  successfulJobsHistoryLimit: 10
+  failedJobsHistoryLimit: 10
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: {{ .Chart.Name }}
+            image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+            imagePullPolicy: {{ .Values.image.pullPolicy }}
+            command:
+            - /usr/local/bin/gohls
+            - download
+            - -o
+            - /data
+            {{- range $url := .Values.cronjob.urls }}
+            - "{{ $url }}"
+            {{- end }}
+            {{- if .Values.volumeMounts }}
+            volumeMounts:
+            {{- toYaml .Values.volumeMounts | nindent 14 }}
+            {{- end }}
+          restartPolicy: OnFailure
+
+          {{- if .Values.volumes }}
+          volumes:
+          {{- toYaml .Values.volumes | nindent 10 -}}
+          {{- end }}
+{{- end }}
