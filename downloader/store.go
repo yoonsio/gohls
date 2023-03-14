@@ -65,6 +65,6 @@ func (s *LocalStore) Process() error {
 func genFileName(segment *Segment) string {
 	// strip url parameters
 	// TODO: append timestamp
-	fileName := fmt.Sprintf("%d-$s", segment.Sequence, strings.Split(segment.Segment, "?")[0])
+	fileName := fmt.Sprintf("%d-%s", segment.Sequence, strings.Split(segment.Segment, "?")[0])
 	return fileName
 }
