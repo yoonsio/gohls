@@ -1,17 +1,16 @@
 package downloader
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"strings"
-
-	"github.com/etherlabsio/go-m3u8/m3u8"
 )
 
 type Store interface {
 	// GetWriter returns writecloser for given storage
 	// caller is expected to close the writer
-	GetWriter(segment *m3u8.SegmentItem) (io.WriteCloser, error)
+	GetWriter(segment *Segment) (io.WriteCloser, error)
 
 	// Process combines segments into a single file
 	Process() error
@@ -30,7 +29,7 @@ func (discardCloser) Close() error {
 type NopStore struct {
 }
 
-func (s *NopStore) GetWriter(segment *m3u8.SegmentItem) (io.WriteCloser, error) {
+func (s *NopStore) GetWriter(segment *Segment) (io.WriteCloser, error) {
 	return discardCloser{}, nil
 }
 
@@ -54,7 +53,7 @@ func NewLocalStorage(dir string) (*LocalStore, error) {
 	}, nil
 }
 
-func (s *LocalStore) GetWriter(segment *m3u8.SegmentItem) (io.WriteCloser, error) {
+func (s *LocalStore) GetWriter(segment *Segment) (io.WriteCloser, error) {
 	return os.Create(s.dir + "/" + genFileName(segment))
 }
 
@@ -63,11 +62,9 @@ func (s *LocalStore) Process() error {
 	return nil
 }
 
-func genFileName(segment *m3u8.SegmentItem) string {
+func genFileName(segment *Segment) string {
 	// strip url parameters
-	fileName := strings.Split(segment.Segment, "?")[0]
-
 	// TODO: append timestamp
-
+	fileName := fmt.Sprintf("%d-$s", segment.Sequence, strings.Split(segment.Segment, "?")[0])
 	return fileName
 }

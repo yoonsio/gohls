@@ -39,3 +39,8 @@ func (c *SegmentWriter) Write(w io.Writer) error {
 	log.Printf("downloaded %d bytes", written)
 	return nil
 }
+
+type Segment struct {
+	m3u8.SegmentItem
+	Sequence int
+}

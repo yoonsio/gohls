@@ -114,26 +114,30 @@ func (c *Client) refresh(baseURL, resource string, depth int) error {
 
 	for i, segment := range pl.Segments() {
 		// if sequence is found, use it to identify the segments
+		sequence := pl.Sequence + i
 		segmentKey := segment.Segment
 		if pl.Sequence != 0 {
-			segmentKey = strconv.Itoa(pl.Sequence + i)
+			segmentKey = strconv.Itoa(sequence)
 		}
 		if _, ok := c.pm.LoadOrStore(segmentKey, struct{}{}); ok {
 			continue
 		}
 		log.Printf("refresh: found segment: (%s) %s", segmentKey, segment.Segment)
 		c.pool.Do(func() error {
-			return c.downloadSegment(baseURL, segment)
+			return c.downloadSegment(sequence, baseURL, segment)
 		})
 	}
 	return nil
 }
 
-func (c *Client) downloadSegment(baseURL string, segment *m3u8.SegmentItem) error {
+func (c *Client) downloadSegment(sequence int, baseURL string, segment *m3u8.SegmentItem) error {
 
-	log.Printf("segment (%f): %s\n", segment.Duration, segment.Segment)
+	log.Printf("segment %d (%f): %s\n", sequence, segment.Duration, segment.Segment)
 
-	w, err := c.store.GetWriter(segment)
+	w, err := c.store.GetWriter(&Segment{
+		SegmentItem: *segment,
+		Sequence:    sequence,
+	})
 	if err != nil {
 		return fmt.Errorf("downloadSegment: failed to get store writer: %w", err)
 	}

@@ -5,7 +5,9 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"log"
+	"net/url"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -19,10 +21,19 @@ var downloadCmd = &cobra.Command{
 	Long:  `Download HLS streams`,
 	Run: func(cmd *cobra.Command, args []string) {
 
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Hour)
+		duration, err := time.ParseDuration(fDuration)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		if len(args) == 0 {
+			log.Fatal(errors.New("no urls supplied"))
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), duration)
 		defer cancel()
 
-		localStore, err := downloader.NewLocalStorage(time.Now().Format("2006-01-02"))
+		localStore, err := downloader.NewLocalStorage(outPath + "/" + time.Now().Format("2006-01-02"))
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -31,10 +42,13 @@ var downloadCmd = &cobra.Command{
 			downloader.WithStore(localStore),
 		)
 
-		urls := []string{
-			"https://stream-us1-alfa.dropcam.com/nexus_aac/88090853f44849c892642d805c42ad9a/playlist.m3u8?public=MGKM8iptgQ", // gym
-			// "https://stream-us1-charlie.dropcam.com/nexus_aac/e6163f08d5094f21a6524733ad2c7023/playlist.m3u8?public=zWixbR3lG9", // toybox
+		for _, arg := range args {
+			if _, err := url.ParseRequestURI(arg); err != nil {
+				log.Fatal(err)
+			}
 		}
+
+		urls := args
 
 		if err := streamClient.Download(ctx, urls); err != nil {
 			log.Fatal(err)
@@ -42,16 +56,14 @@ var downloadCmd = &cobra.Command{
 	},
 }
 
+var (
+	fDuration string
+	outPath   string
+)
+
 func init() {
 	rootCmd.AddCommand(downloadCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// downloadCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// downloadCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	downloadCmd.Flags().StringVarP(&outPath, "out", "o", "", "output path")
+	downloadCmd.MarkFlagRequired("out")
+	downloadCmd.Flags().StringVarP(&fDuration, "duration", "d", "12h", "how long gohls should record before terminating")
 }
